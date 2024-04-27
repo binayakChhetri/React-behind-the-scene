@@ -65,8 +65,52 @@ function TabContent({ item }) {
   const [showDetails, setShowDetails] = useState(true);
   const [likes, setLikes] = useState(0);
 
+  // This log is to make sure that the component renders only once due to state batching.
+  console.log("RENDER");
+
   function handleInc() {
     setLikes(likes + 1);
+  }
+
+  function handleTripleInc() {
+    // REMERBER THIS BEFORE BEING CONFUSED IN BELOW CODE
+    // Updated state variables are not immediately available after setState call, but only
+    // after re-render.
+    // setLikes(likes + 1); // 0 + 1
+    // setLikes(likes + 1); // Still 0 + 1
+    // setLikes(likes + 1); // Still 0 + 1
+    //
+    //
+    //
+    // ABOVE PROBLEM CAN BE SOLVED BY DOING THE BELOW THINGS.
+    // If we want to update a state based on current state we use  callback function instead of
+    // just a value.
+    // In the callback function we do actually get access to the latest updated state.
+    // So its a good practice to use callback function while updating the state based on the current state.
+    setLikes((likes) => likes + 1);
+    console.log(likes);
+    setLikes((likes) => likes + 1);
+    setLikes((likes) => likes + 1);
+  }
+  function handleUndo() {
+    // These two state updates are batched in to one state update for the
+    // entire event handler. When batch is done react will trigger one single render and commit.
+    setShowDetails(true);
+    setLikes(0);
+
+    // State updation is asynchoronous.
+    // The below value of likes won't be reset and will print
+    // previous value.
+    // Updated state variables are not immediately available after setState call, but only
+    // after re=render.
+    console.log(likes);
+  }
+
+  // Doing this to check whether state batching works or not beyond Event Handler Function
+  // Before React 18, state batching used to work only in Event handler function.
+  // From React 18, state batching works on event handlers, timeouts, promises, native events(As far as I learned) etc.
+  function handleUndoLater() {
+    setTimeout(handleUndo, 2000);
   }
 
   return (
@@ -82,13 +126,13 @@ function TabContent({ item }) {
         <div className="hearts-counter">
           <span>{likes} ❤️</span>
           <button onClick={handleInc}>+</button>
-          <button>+++</button>
+          <button onClick={handleTripleInc}>+++</button>
         </div>
       </div>
 
       <div className="tab-undo">
-        <button>Undo</button>
-        <button>Undo in 2s</button>
+        <button onClick={handleUndo}>Undo</button>
+        <button onClick={handleUndoLater}>Undo in 2s</button>
       </div>
     </div>
   );
@@ -102,5 +146,5 @@ function DifferentContent() {
   );
 }
 
-console.log(<DifferentContent key={1} name="Binayak" />);
-console.log(DifferentContent());
+// console.log(<DifferentContent key={1} name="Binayak" />);
+// console.log(DifferentContent());
